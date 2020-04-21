@@ -2,6 +2,10 @@ import React, {useState} from 'react';
 import "./sudoku-map.css";
 
 function SudokuMap(props) {
+
+    // FIXME this needs refactorization, we need to prepare some better optimized structures
+    // hints should be sorted array of all items with null where there is no number
+    // also we need hintsLeft property
     function prepareSolutionFromMap() {
         let chars = props.map.split("");
         let rows = [];
@@ -53,6 +57,7 @@ function SudokuMap(props) {
         })
     }
 
+    // FIXME optimize this after refactoring solution, array[index] is better than array.indexOf(value)
     function checkNumberInHints(cellA, checkedValue) {
         let hintIndex = cellA.hints.indexOf(checkedValue);
         if (hintIndex > -1) {
@@ -60,6 +65,7 @@ function SudokuMap(props) {
         }
     }
 
+    // FIXME optimize - this is O(mn^2), it can be O(2mn) at least
     function checkSameNumberInRow() {
         for (let row of solution) {
             for (let cellA of row) {
@@ -76,6 +82,7 @@ function SudokuMap(props) {
         }
     }
 
+    // FIXME optimize - this is O(mn^2), it can be O(2mn) at least
     function checkSameNumberInColumn() {
         for (let rowA of solution) {
             for (let cellIndex = 0; cellIndex < rowA.length; cellIndex++) {
@@ -90,6 +97,35 @@ function SudokuMap(props) {
                     if (!checkedValue) continue;
                     checkNumberInHints(cellA, checkedValue);
                 }
+            }
+        }
+    }
+
+    function forEachCellInSegment(rowI, colI, callback) {
+        for (let cellRowI = 0; cellRowI <= 2; cellRowI++) {
+            for (let cellColI = 0; cellColI <= 2; cellColI++) {
+                let finalColI = (colI * 3) + cellColI;
+                let finalRowI = (rowI * 3) + cellRowI;
+                let cell = solution[finalRowI][finalColI];
+                callback(cell);
+            }
+        }
+    }
+
+    function check3to3segments() {
+        for (let rowSegmentI = 0; rowSegmentI <= 2; rowSegmentI++) {
+            for (let colSegmentI = 0; colSegmentI <= 2; colSegmentI++) {
+                forEachCellInSegment(rowSegmentI, colSegmentI, cellA => {
+                    if (cellA.value || cellA.solution) {
+                        return;
+                    }
+
+                    forEachCellInSegment(rowSegmentI, colSegmentI, cellB => {
+                        let checkedValue = cellB.value || cellB.solution;
+                        if (!checkedValue) return;
+                        checkNumberInHints(cellA, checkedValue);
+                    })
+                })
             }
         }
     }
@@ -110,6 +146,7 @@ function SudokuMap(props) {
     function handleSolveAll() {
         checkSameNumberInRow();
         checkSameNumberInColumn();
+        check3to3segments();
         fillSolutions(true);
         setSolution([...solution]);
     }
@@ -121,6 +158,11 @@ function SudokuMap(props) {
 
     function handleCheckSameNumberInColumn() {
         checkSameNumberInColumn();
+        setSolution([...solution]);
+    }
+
+    function handleCheck3to3segments() {
+        check3to3segments();
         setSolution([...solution]);
     }
 
@@ -148,6 +190,10 @@ function SudokuMap(props) {
 
                 <button onClick={handleCheckSameNumberInColumn}>
                     Solve numbers in columns
+                </button>
+
+                <button onClick={handleCheck3to3segments}>
+                    Solve numbers in 3x3 segments
                 </button>
 
                 <button onClick={handleFillOneNumber}>
