@@ -130,6 +130,11 @@ function SudokuMap(props) {
         }
     }
 
+    // TODO create function "checkRowHintCombos" and "checkColHintCombos"
+    // if there are hints in one segment only in one line or in on column,
+    // there cannot be any other same number in same line or column
+
+    // TODO rename to "fillSingleHintSolutions(all)"
     function fillSolutions(all) {
         for (let row of solution) {
             for (let cell of row) {
@@ -141,6 +146,8 @@ function SudokuMap(props) {
             }
         }
     }
+
+    // TODO create function "fillUniqueHintInSegmentSolutions(all)"
 
     // handlers
     function handleSolveAll() {

@@ -53,11 +53,15 @@ const SUDOKU_LIST = [
     "680905000003000508402108703390720800000000010045006900060804002001002075700013000"
 ]
 
+const EXPERT_SUDOKU_LIST = [
+    "400000078700100409002300000100406000060000000040053100000500000813000007000020000"
+];
+
 function App() {
     return (
         <div>
             <SudokuMap
-                map={SUDOKU_LIST[0]}
+                map={EXPERT_SUDOKU_LIST[0]}
             />
         </div>
     );
