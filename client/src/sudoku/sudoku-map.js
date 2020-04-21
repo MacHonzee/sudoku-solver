@@ -134,6 +134,10 @@ function SudokuMap(props) {
     // if there are hints in one segment only in one line or in on column,
     // there cannot be any other same number in same line or column
 
+    // TODO create function "checkSegmentHintCombos"
+    // if there are for example cells with hints 2, 9 and 2, 9, then no other cell
+    // can contain neither 2 nor 9 (because 2 and 9 have to be filled in the 2, 9 hinted cell)
+
     // TODO rename to "fillSingleHintSolutions(all)"
     function fillSolutions(all) {
         for (let row of solution) {
