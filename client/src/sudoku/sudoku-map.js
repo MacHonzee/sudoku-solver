@@ -1,6 +1,67 @@
 import React, {useState} from 'react';
 import "./sudoku-map.css";
 
+// návrh nových datových struktur
+let struct = {
+    // to, co přišlo z propsy (nuly tam, kde není známá hodnota předem)
+    // bez počáteční trailing nuly, čili přesně 81 znaků
+    initialValues: "400000078700100409002300000100406000060000000040053100000500000813000007000020000",
+    // to, co bylo vyplněno automaticky (a nuly tam, kde nebylo vyplněno zatím nic nebo kde je initialValue)
+    // rovněž přesně 81 znaků
+    filledValues: "000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+
+    rows: {
+        numbers: [
+            // čili pole o 10 číslech, na nultém indexu vždy 0, abychom mohli
+            // udělat rows[rowIndex][checkedValue] === checkedValue, čili abychom nemuseli posouvat index v poli
+            [0, 0, 1, 2, 0, 8, 6, 0, 0, 0],
+            [0, 3, 0, 4, 1, 6, 2, 8, 0, 0],
+            [] // a další, čili 9 řádků celkem
+        ],
+        str: [
+            // rows[rowIndex].join(""), nic jiného - kvůli mnohem snazší možnosti porovnat, zda jsou dvě pole stejné
+            "0012086000",
+            "0304162800",
+            "" // ...
+        ]
+    },
+
+    // stejně jako řádky výše, zleva doprava mít čísla ze sloupečků takhle pod sebou
+    columns: {
+        numbers: [
+            [0, 0, 1, 2, 0, 8, 6, 0, 0, 0],
+            []
+        ],
+        str: [
+            "0012086000",
+            ""
+        ]
+    },
+
+    segments: {
+        // stejně jako výše, 9 segmentů zleva doprava a zezhora dolů, vevnitř také zleva doprava a zezhora dolů,
+        // včetně nultého indexu obsahujícím nulu
+        numbers: [
+            []
+        ],
+        str: [
+            ""
+        ]
+    },
+
+    hints: {
+        // zde bude pole o 81 prvcích (9 x 9), v každém prvku je pak pole o 10 prvcích
+        // čili nidy nebude probíhat iterace po všech hintech, ale bude to indexovaně s tím, že
+        // pohyb po sloupcích bude mít pohyb po 9 indexech, místo po 1
+        numbers: [
+            []
+        ],
+        str: [
+            ""
+        ]
+    }
+}
+
 function SudokuMap(props) {
 
     // FIXME this needs refactorization, we need to prepare some better optimized structures
@@ -543,7 +604,6 @@ function SudokuMap(props) {
         fillUniqueHintInSegmentSolutions(false);
         setSolution([...solution]);
     }
-
 
 
     return (
