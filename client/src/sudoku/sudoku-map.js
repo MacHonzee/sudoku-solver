@@ -16,7 +16,8 @@ function SudokuMap(props) {
             row.push({
                 value: num,
                 solution: null,
-                hints: num ? [] : [1, 2, 3, 4, 5, 6, 7, 8, 9]
+                hints: num ? [] : [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                strHints: num ? "" : "123456789"
             });
 
             if ((i + 1) % 9 === 0) {
@@ -58,10 +59,11 @@ function SudokuMap(props) {
         });
     }
 
-    function checkNumberInHints(cellA, checkedValue) {
+    function removeNumberFromHints(cellA, checkedValue) {
         let hintIndex = cellA.hints.indexOf(checkedValue);
         if (hintIndex > -1) {
             cellA.hints.splice(hintIndex, 1);
+            cellA.strHints = cellA.hints.join("");
             return true;
         }
         return false;
@@ -77,7 +79,7 @@ function SudokuMap(props) {
                 for (let cellB of row) {
                     let checkedValue = cellB.value || cellB.solution;
                     if (!checkedValue) continue;
-                    checkNumberInHints(cellA, checkedValue);
+                    removeNumberFromHints(cellA, checkedValue);
                 }
             }
         }
@@ -95,7 +97,7 @@ function SudokuMap(props) {
                     let cellB = rowB[cellIndex];
                     let checkedValue = cellB.value || cellB.solution;
                     if (!checkedValue) continue;
-                    checkNumberInHints(cellA, checkedValue);
+                    removeNumberFromHints(cellA, checkedValue);
                 }
             }
         }
@@ -130,7 +132,7 @@ function SudokuMap(props) {
                 forEachCellInSegment(rowSegmentI, colSegmentI, cellB => {
                     let checkedValue = cellB.value || cellB.solution;
                     if (!checkedValue) return;
-                    checkNumberInHints(cellA, checkedValue);
+                    removeNumberFromHints(cellA, checkedValue);
                 });
             });
         });
@@ -149,7 +151,7 @@ function SudokuMap(props) {
                     }
 
                     for (let hint of cellA.hints) {
-                        // first we need to check if there is multiple hints in a same row
+                        // first we need to check if there are multiple hints in a same row in same segment
                         let hintCombo = false;
                         for (let colCellI2 = 0; colCellI2 <= 2; colCellI2++) {
                             let cellB = solution[currentRowI][firstColOfSegment + colCellI2];
@@ -158,7 +160,7 @@ function SudokuMap(props) {
                         }
                         if (!hintCombo) continue;
 
-                        // then we check if there are no same hints in any cell in other rows
+                        // then we check if there are no same hints in any cell in other rows in same segment
                         for (let rowCellCheckedI = 0; rowCellCheckedI <= 2; rowCellCheckedI++) {
                             if (rowCellI === rowCellCheckedI) continue;
 
@@ -174,13 +176,15 @@ function SudokuMap(props) {
                             if (!hintCombo) break;
                         }
 
+                        // and if there are hints in segment in one row and no other row, then this whole row cannot
+                        // contain the hint
                         if (hintCombo) {
                             let thisSegmentsColumns = [firstColOfSegment, firstColOfSegment + 1, firstColOfSegment + 2]
                             for (let colCellCheckedI = 0; colCellCheckedI <= 8; colCellCheckedI++) {
                                 if (thisSegmentsColumns.indexOf(colCellCheckedI) > -1) continue;
                                 let checkedCell = solution[currentRowI][colCellCheckedI];
                                 if (checkedCell.value || checkedCell.solution) continue;
-                                checkNumberInHints(checkedCell, hint);
+                                removeNumberFromHints(checkedCell, hint);
                             }
                         }
                     }
@@ -189,11 +193,152 @@ function SudokuMap(props) {
         });
     }
 
-    // TODO create function "checkColHintCombos" analogically to checkRowHintCombos
+    function checkColHintCombos() {
+        forEachSegment((rowSegmentI, colSegmentI) => {
+            for (let colCellI = 0; colCellI <= 2; colCellI++) {
+                for (let rowCellI1 = 0; rowCellI1 <= 2; rowCellI1++) {
+                    let firstColOfSegment = colSegmentI * 3;
+                    let firstRowOfSegment = rowSegmentI * 3;
+                    let currentRowI = firstRowOfSegment + rowCellI1;
+                    let currentColI = firstColOfSegment + colCellI;
+                    let cellA = solution[currentRowI][currentColI];
+                    if (cellA.value || cellA.solution) {
+                        continue;
+                    }
 
-    // TODO create function "checkSegmentHintCombos"
+                    for (let hint of cellA.hints) {
+                        // first we need to check if there are multiple hints in a same column in same segment
+                        let hintCombo = false;
+                        for (let rowCellI2 = 0; rowCellI2 <= 2; rowCellI2++) {
+                            let cellB = solution[firstRowOfSegment + rowCellI2][currentColI];
+                            if (cellA === cellB) continue;
+                            if (cellB.hints.indexOf(hint) > -1) hintCombo = true;
+                        }
+                        if (!hintCombo) continue;
+
+                        // then we check if there are no same hints in any cell in other columns in same segment
+                        for (let colCellCheckedI = 0; colCellCheckedI <= 2; colCellCheckedI++) {
+                            if (colCellI === colCellCheckedI) continue;
+
+                            for (let rowCellCheckedI = 0; rowCellCheckedI <= 2; rowCellCheckedI++) {
+                                let cellB = solution[firstRowOfSegment + rowCellCheckedI][firstColOfSegment + colCellCheckedI];
+                                if (cellB.value || cellB.solution) continue;
+                                if (cellB.hints.indexOf(hint) > -1) {
+                                    hintCombo = false;
+                                    break;
+                                }
+                            }
+
+                            if (!hintCombo) break;
+                        }
+
+                        // and if there are hints in segment in one column and no other column, then this whole column
+                        // cannot contain the hint
+                        if (hintCombo) {
+                            let thisSegmentsRows = [firstRowOfSegment, firstRowOfSegment + 1, firstRowOfSegment + 2]
+                            for (let rowCellCheckedI = 0; rowCellCheckedI <= 8; rowCellCheckedI++) {
+                                if (thisSegmentsRows.indexOf(rowCellCheckedI) > -1) continue;
+                                let checkedCell = solution[rowCellCheckedI][currentColI];
+                                if (checkedCell.value || checkedCell.solution) continue;
+                                removeNumberFromHints(checkedCell, hint);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     // if there are for example cells with hints 2, 9 and 2, 9, then no other cell
     // can contain neither 2 nor 9 (because 2 and 9 have to be filled in the 2, 9 hinted cell)
+    function checkSegmentNakedCombos() {
+        forEachSegment((rowSegmentI, colSegmentI) => {
+            forEachCellInSegment(rowSegmentI, colSegmentI, cellA => {
+                if (cellA.value || cellA.solution) return;
+
+                let otherComboCells = [cellA];
+                forEachCellInSegment(rowSegmentI, colSegmentI, cellB => {
+                    if (cellB.value || cellB.solution || cellA === cellB) return;
+
+                    if (cellA.strHints === cellB.strHints) {
+                        otherComboCells.push(cellB);
+                    }
+                });
+
+                if (otherComboCells.length !== cellA.hints.length) return;
+
+                forEachCellInSegment(rowSegmentI, colSegmentI, cellB => {
+                    if (cellB.value || cellB.solution || otherComboCells.includes(cellB)) return;
+
+                    cellA.hints.forEach(hint => {
+                        removeNumberFromHints(cellB, hint);
+                    });
+                });
+            });
+        });
+    }
+
+    // if there are for example cells with hints 2, 9 and 2, 9, then no other cell in same row
+    // can contain neither 2 nor 9 (because 2 and 9 have to be filled in the 2, 9 hinted cell)
+    function checkRowNakedCombos() {
+        for (let row of solution) {
+            for (let cellA of row) {
+                if (cellA.value || cellA.solution) continue;
+
+                let otherComboCells = [cellA];
+                for (let cellB of row) {
+                    if (cellB.value || cellB.solution || cellA === cellB) continue;
+
+                    if (cellA.strHints === cellB.strHints) {
+                        otherComboCells.push(cellB);
+                    }
+                }
+
+                if (otherComboCells.length === cellA.hints.length) {
+                    for (let cellB of row) {
+                        if (cellB.value || cellB.solution || otherComboCells.includes(cellB)) continue;
+
+                        cellA.hints.forEach(hint => {
+                            removeNumberFromHints(cellB, hint);
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    // if there are for example cells with hints 2, 9 and 2, 9, then no other cell in same column
+    // can contain neither 2 nor 9 (because 2 and 9 have to be filled in the 2, 9 hinted cell)
+    function checkColumnNakedCombos() {
+        for (let rowA of solution) {
+            for (let cellIndex = 0; cellIndex < rowA.length; cellIndex++) {
+                let cellA = rowA[cellIndex];
+                if (cellA.value || cellA.solution) continue;
+
+                let otherComboCells = [cellA];
+
+                for (let rowB of solution) {
+                    let cellB = rowB[cellIndex];
+                    if (cellB.value || cellB.solution || cellA === cellB) continue;
+
+                    if (cellA.strHints === cellB.strHints) {
+                        otherComboCells.push(cellB);
+                    }
+                }
+
+                if (otherComboCells.length === cellA.hints.length) {
+                    for (let rowB of solution) {
+                        let cellB = rowB[cellIndex];
+                        if (cellB.value || cellB.solution || otherComboCells.includes(cellB)) continue;
+
+                        cellA.hints.forEach(hint => {
+                            removeNumberFromHints(cellB, hint);
+                        });
+                    }
+                }
+            }
+        }
+    }
 
     function fillSingleHintSolutions(all) {
         for (let row of solution) {
@@ -201,6 +346,7 @@ function SudokuMap(props) {
                 if (!cell.value && !cell.solution && cell.hints.length === 1) {
                     cell.solution = cell.hints[0];
                     cell.hints = [];
+                    cell.strHints = "";
                     if (!all) return;
                 }
             }
@@ -236,6 +382,7 @@ function SudokuMap(props) {
                     if (uniqueHint && (all || (!all && !alreadyFilled))) {
                         cellA.solution = hint;
                         cellA.hints = [];
+                        cellA.strHints = "";
                         alreadyFilled = true;
                         break;
                     }
@@ -273,6 +420,7 @@ function SudokuMap(props) {
                     if (uniqueHint && (all || (!all && !alreadyFilled))) {
                         cellA.solution = hint;
                         cellA.hints = [];
+                        cellA.strHints = "";
                         alreadyFilled = true;
                         break;
                     }
@@ -309,6 +457,7 @@ function SudokuMap(props) {
                     if (uniqueHint && (all || (!all && !alreadyFilled))) {
                         cellA.solution = hint;
                         cellA.hints = [];
+                        cellA.strHints = "";
                         alreadyFilled = true;
                         break;
                     }
@@ -324,6 +473,10 @@ function SudokuMap(props) {
         checkSameNumberInColumn();
         check3to3segments();
         checkRowHintCombos();
+        checkColHintCombos();
+        checkSegmentNakedCombos();
+        checkRowNakedCombos();
+        checkColumnNakedCombos();
         fillSingleHintSolutions(true);
         fillUniqueHintInRowSolutions(true);
         fillUniqueHintInColumnSolutions(true);
@@ -351,6 +504,26 @@ function SudokuMap(props) {
         setSolution([...solution]);
     }
 
+    function handleCheckColHintCombos() {
+        checkColHintCombos();
+        setSolution([...solution]);
+    }
+
+    function handleCheckSegmentNakedCombos() {
+        checkSegmentNakedCombos();
+        setSolution([...solution]);
+    }
+
+    function handleCheckRowNakedCombos() {
+        checkRowNakedCombos();
+        setSolution([...solution]);
+    }
+
+    function handleCheckColumnNakedCombos() {
+        checkColumnNakedCombos();
+        setSolution([...solution]);
+    }
+
     function handleFillSingleHintSolutions() {
         fillSingleHintSolutions(false);
         setSolution([...solution]);
@@ -370,6 +543,8 @@ function SudokuMap(props) {
         fillUniqueHintInSegmentSolutions(false);
         setSolution([...solution]);
     }
+
+
 
     return (
         <div className={"sudoku-map-wrapper"}>
@@ -398,6 +573,22 @@ function SudokuMap(props) {
 
                 <button onClick={handleCheckRowHintCombos}>
                     Solve rows with hint combos in segments
+                </button>
+
+                <button onClick={handleCheckColHintCombos}>
+                    Solve columns with hint combos in segments
+                </button>
+
+                <button onClick={handleCheckSegmentNakedCombos}>
+                    Solve segments with naked combos
+                </button>
+
+                <button onClick={handleCheckRowNakedCombos}>
+                    Solve rows with naked combos
+                </button>
+
+                <button onClick={handleCheckColumnNakedCombos}>
+                    Solve columns with naked combos
                 </button>
             </div>
 
