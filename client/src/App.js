@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import SudokuMap from "./sudoku/sudoku-map";
+import MapView from "./sudoku_classes/map-view";
 
 const SUDOKU_LIST = [
     "004300209005009001070060043006002087190007400050083000600000105003508690042910300",
@@ -60,8 +60,8 @@ const EXPERT_SUDOKU_LIST = [
 function App() {
     return (
         <div>
-            <SudokuMap
-                map={EXPERT_SUDOKU_LIST[0]}
+            <MapView
+                map={"000003001000060205000510834700000900005907100001000006543092000107030000200100000"}
             />
         </div>
     );

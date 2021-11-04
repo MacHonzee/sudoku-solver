@@ -1,0 +1,64 @@
+.sudoku-map-wrapper {
+    padding-top: 40px;
+    text-align: center;
+}
+
+.sudoku-map-wrapper button {
+    margin-right: 8px;
+    margin-bottom: 8px;
+}
+
+.sudoku-map {
+    display: flex;
+    align-content: center;
+    justify-content: center;
+    flex-direction: column;
+    margin: 40px auto;
+    width: fit-content;
+    font-size: 24px;
+    border: 3px solid green;
+}
+
+.sudoku-map-row {
+    display: flex;
+}
+
+.sudoku-map-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-left: 1px solid green;
+    border-top: 1px solid green;
+    padding: 2px;
+}
+
+.sudoku-map-cell:last-child {
+    border-right: 1px solid green;
+}
+
+.sudoku-map-row:last-child {
+    border-bottom: 1px solid green;
+}
+
+.sudoku-map-row:nth-child(3),
+.sudoku-map-row:nth-child(6) {
+    border-bottom: 3px solid green;
+}
+
+.sudoku-map-cell:nth-child(3),
+.sudoku-map-cell:nth-child(6) {
+    border-right: 3px solid green;
+}
+
+.sudoku-map-cell-hints {
+    align-items: flex-start;
+    font-size: 12px;
+    text-align: left;
+}
+
+.sudoku-map-cell-solved {
+    color: green;
+    font-weight: bold;
+}
