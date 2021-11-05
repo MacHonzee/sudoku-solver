@@ -2,8 +2,18 @@ import Cell from "./cell";
 import Row from "./row";
 import Col from "./col";
 import Segment from "./segment";
+import Constants from "./constants";
 
 const SEGMENT_INDEXES = "000111222000111222000111222333444555333444555333444555666777888666777888666777888";
+
+function nTimesMap(n, callback) {
+    let array = [];
+    for (let i = 0; i <= n; i++) {
+        let result = callback(i);
+        array.push(result);
+    }
+    return array;
+}
 
 export default class Grid {
     constructor(initialPattern) {
@@ -11,39 +21,35 @@ export default class Grid {
     }
 
     prepareCells(initialPattern) {
-        let chars = initialPattern.split("");
-
-        let rows = [
-            [], [], [], [], [], [], [], [], []
-        ];
-        let cols = [
-            [], [], [], [], [], [], [], [], []
-        ];
-        let segments = [
-            [], [], [], [], [], [], [], [], []
-        ];
-
         this.cells = [];
+        this.rows = nTimesMap(9, (i) => new Row(i));
+        this.cols = nTimesMap(9, (i) => new Col(i));
+        this.segments = nTimesMap(9, () => new Segment());
+
+        let chars = initialPattern.split("");
         chars.forEach((char, i) => {
-            let cell = new Cell(char);
+            let cell = new Cell(this);
             this.cells.push(cell);
 
             // every ninth character is a different row
             let rowIndex = Math.floor(i / 9);
-            rows[rowIndex].push(cell);
+            this.rows[rowIndex].addCell(cell);
 
             // every modulo is a different column
             let colIndex = i % 9;
-            cols[colIndex].push(cell);
+            this.cols[colIndex].addCell(cell);
 
-            // every third character is a different segment
+            // every third character of a row in a third column is a different segment
             // TODO think of a more mathematical way for this
             let segmentIndex = parseInt(SEGMENT_INDEXES[i]);
-            segments[segmentIndex].push(cell);
+            this.segments[segmentIndex].addCell(cell);
         });
 
-        this.rows = rows.map(rowCells => new Row(rowCells));
-        this.cols = cols.map(colCells => new Col(colCells));
-        this.segments = segments.map(segmentCells => new Segment(segmentCells));
+        chars.forEach((char, i) => {
+            let cell = this.cells[i];
+            if (char !== Constants.noSolution) {
+                cell.setSolution(char);
+            }
+        });
     }
 }
